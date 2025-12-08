@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  chatserver:
+    build: .
+    ports:
+      - "8082:8082"
+    environment:
+      - ARK_API_KEY=${ARK_API_KEY}
+      - ARK_MODEL_ID=${ARK_MODEL_ID:-deepseek-v3-250324}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
