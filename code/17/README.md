@@ -5,7 +5,7 @@
 - `/chat`：POST `{message:"你好", model:"your-model-id"}`，鉴权后调用 Ark 大模型流式返回，SSE 输出。
 - `/healthz`：探活。
 - 中间件：JWT Bearer 校验（跳过 login/healthz）、安全头、日志、recover。
-- CLI 客户端：`cmd/chatclient` 交互式登录并循环发起对话，打印 SSE 流，Ctrl-C 退出。
+- 浏览器前端：打开 `/`，填写默认账户 alice/123 即可登录并发起 SSE 对话。
 
 ## 运行
 ```bash
@@ -13,6 +13,8 @@ cd code/17
 export ARK_API_KEY=...       # 必填
 export ARK_MODEL_ID=...      # 模型 endpoint ID，可在请求中覆盖；为空则默认 deepseek-v3-250324
 go run ./cmd/chatserver
+# 浏览器访问
+# http://localhost:8082/
 ```
 
 ## 调用示例
@@ -27,9 +29,6 @@ curl -N -X POST localhost:8082/chat \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"message":"你好"}'
-
-# 交互式客户端
-go run ./cmd/chatclient
 ```
 
 ## Docker 运行

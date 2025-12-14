@@ -25,7 +25,7 @@ docker run --rm -p 8082:8082 \
   chatserver:dev
 ```
 - 环境变量：`ARK_API_KEY` 必填；`ARK_MODEL_ID` 可覆盖默认模型；如使用 JWT 密钥自定义，可在镜像内通过 `JWT_SECRET`（可扩展修改代码）传入。
-- 客户端验证：在宿主机用 `curl -N` 或 `go run ./cmd/chatclient` 连接 `http://localhost:8082`。
+- 客户端验证：在宿主机打开 `http://localhost:8082`。
 
 ## 容器化注意点
 - 健康检查：可以在容器编排中配置探针调用 `/healthz`。

@@ -41,11 +41,12 @@ func NewMux(cfg Config) http.Handler {
 	mux.HandleFunc("/login", LoginHandler(cfg))
 	mux.HandleFunc("/chat", ChatHandler(cfg))
 	mux.HandleFunc("/healthz", HealthHandler)
+	mux.Handle("/", FrontendHandler())
 
 	return Chain(
 		mux,
 		SecurityHeaders(cfg.AllowOrigin),
-		BearerAuthMiddleware(cfg.JWTSecret, []string{"/login", "/healthz"}),
+		BearerAuthMiddleware(cfg.JWTSecret, []string{"/login", "/healthz", "/", "/assets/*", "/favicon.ico"}),
 		RecoverMiddleware(cfg.Logger),
 		LoggingMiddleware(cfg.Logger),
 	)
