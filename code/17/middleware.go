@@ -42,17 +42,9 @@ func RecoverMiddleware(logger *log.Logger) func(http.Handler) http.Handler {
 
 // BearerAuthMiddleware validates JWT Bearer tokens unless path is allowlisted.
 func BearerAuthMiddleware(secret string, allowlist []string) func(http.Handler) http.Handler {
-	skip := make(map[string]struct{}, len(allowlist))
-	for _, p := range allowlist {
-		skip[p] = struct{}{}
-	}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if secret == "" {
-				next.ServeHTTP(w, r)
-				return
-			}
-			if _, ok := skip[r.URL.Path]; ok {
+			if secret == "" || allowlisted(r.URL.Path, allowlist) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -70,6 +62,18 @@ func BearerAuthMiddleware(secret string, allowlist []string) func(http.Handler) 
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func allowlisted(path string, allowlist []string) bool {
+	for _, p := range allowlist {
+		if p == path {
+			return true
+		}
+		if strings.HasSuffix(p, "*") && strings.HasPrefix(path, strings.TrimSuffix(p, "*")) {
+			return true
+		}
+	}
+	return false
 }
 
 func parseJWT(secret, token string) (*jwt.RegisteredClaims, error) {

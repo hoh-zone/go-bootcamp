@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Client</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <div class="background-veil"></div>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">Chapter 17 · SSE Chat</p>
+        <h1>Chat Client, now on the Web</h1>
+        <p class="lede">登录获取 JWT，发送消息，直接在浏览器中观看流式返回。</p>
+      </div>
+      <div class="status-block">
+        <div class="status-label">连接状态</div>
+        <div id="status-badge" class="status-badge status-idle">未登录</div>
+        <div class="hint">默认账户 alice / 123</div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <div class="card-title">登录</div>
+        <form id="login-form" class="form">
+          <label class="field">
+            <span>服务地址</span>
+            <input id="api-host" name="host" type="url" autocomplete="url" placeholder="http://localhost:8082" required>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>用户名</span>
+              <input id="username" name="username" type="text" autocomplete="username" value="alice" required>
+            </label>
+            <label class="field">
+              <span>密码</span>
+              <input id="password" name="password" type="password" autocomplete="current-password" value="123" required>
+            </label>
+          </div>
+          <button type="submit" class="primary">获取 Token</button>
+          <p id="login-hint" class="muted">点击上方按钮即可登录。</p>
+        </form>
+      </section>
+
+      <section class="card chat-card">
+        <div class="card-title">对话</div>
+        <div id="chat-log" class="chat-log" aria-live="polite"></div>
+        <form id="chat-form" class="chat-form">
+          <input id="message" name="message" type="text" placeholder="输入问题，按回车发送" autocomplete="off">
+          <button id="send-btn" type="submit" class="primary">发送</button>
+        </form>
+        <p id="chat-hint" class="muted small">登录后才可发送，返回为 SSE 流；支持 Ctrl+Enter 换行。</p>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>
