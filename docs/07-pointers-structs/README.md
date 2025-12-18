@@ -71,6 +71,24 @@ func (u User) MutateTag0(newTag string) {
 }
 ```
 
+### 指针接收者也可在 nil 上调用
+- 方法调用是语法糖：`u.ChangeName("x")` 会被编译器改写成 `(*User).ChangeName(u, "x")`，所以即便 `u` 是 `nil` 也能“调用”到方法。
+- 能否正常运行取决于方法体是否解引用了 `u`：只要不访问字段或 `*u`，就不会 panic。
+
+示例：
+```go
+func (u *User) IsNil() bool {
+	return u == nil
+}
+
+func (u *User) SafeAddTag(tag string) {
+	if u == nil {
+		return
+	}
+	u.Tags = append(u.Tags, tag)
+}
+```
+
 ## 嵌套与匿名字段
 - 结构体可以包含其他结构体，形成组合。
 - 匿名字段（嵌入）可把内部字段“提升”到外层，形成轻量继承。
@@ -129,7 +147,7 @@ func marshalDemo() {
 ```
 
 ## 零值友好与构造函数
-- 让零值可直接使用：切片/映射默认 nil，可用 `append` 或延迟初始化。
+- 让零值可直接使用：切片/map默认 nil，可用 `append` 或延迟初始化。
 - 提供构造函数封装必需字段校验：`func NewUser(name string) (*User, error)`
 - 避免过度使用 setters；直接导出字段或提供方法做校验。
 

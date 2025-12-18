@@ -35,7 +35,7 @@ func worker(ctx context.Context, jobs <-chan Job) {
 	for {
 		select {
 		case j, ok := <-jobs:
-			if !ok {
+			if !ok { //从通道接收时该通道已被关闭（且缓冲被读空）
 				return
 			}
 			process(j)

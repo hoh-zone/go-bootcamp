@@ -14,22 +14,20 @@
 - 纯函数 vs 有副作用的选择
 
 ## 函数签名与调用
-- Go 一律按值传递；想要修改调用方数据用指针参数：`func setName(u *User, name string) { u.Name = name }`
+- Go 一律按值传递；想要修改调用方数据用指针参数：`func set(n *int) { *n = 1 }`
 - 函数可以返回多个值，通常把数据与 `error` 放在一起返回：`func load(id int) (User, error)`
 - 使用命名返回值时，建议只在简短函数或需要 `defer` 修改返回值时使用，否则保持未命名更清晰。
 
 示例：
 ```go
-type User struct{ Name string }
-
 // 传值：调用者不会被修改
-func renameCopy(u User, name string) {
-	u.Name = name // 只改副本
+func addCopy(n int, delta int) {
+	n += delta // 只改副本
 }
 
 // 传指针：调用者会被修改
-func renamePtr(u *User, name string) {
-	u.Name = name
+func addPtr(n *int, delta int) {
+	*n += delta
 }
 
 // 命名返回值可配合 defer 微调结果
@@ -156,6 +154,4 @@ fmt.Println(evens) // [2 4]
 ```
 
 ## 小练习
-1) 写一个函数 `Average(nums ...float64) (float64, error)`，当输入为空时返回错误。
-2) 写一个高阶函数 `Filter`，接收切片与谓词函数，返回过滤后的新切片。
-3) 用闭包实现一个简单的计数器工厂：`NewCounter(start int) func() int`，每次调用返回递增值。 
+写一个函数 `Average(nums ...float64) (float64, error)`，当输入为空时返回错误。
