@@ -58,6 +58,26 @@ func greet(p Printer) {
 }
 ```
 
+## 接口作为泛型约束
+- 泛型类型参数需要一个“约束”来限定可用的操作，接口正是主要的约束形式：接口里的方法、内建约束 `~`、并集 `|` 都可以限制可接受的类型。
+- `any`（`interface{}`）作为约束意味着“不限制”，而像 `comparable`、`fmt.Stringer` 则限制了可用操作（可比较、可调用 `String()`）。
+
+示例：约束要求实现 `Print()` 的类型才能被传入。
+```go
+type Printer interface {
+	Print() string
+}
+
+func MapPrint[T Printer](items []T) []string {
+	out := make([]string, 0, len(items))
+	for _, v := range items {
+		out = append(out, v.Print())
+	}
+	return out
+}
+```
+`MapPrint` 的类型参数 `T` 受 `Printer` 约束，调用者只能传入实现了 `Print()` 方法的类型，编译期即可检查。
+
 ## 类型断言与类型切换
 - 断言：`u, ok := any.(User)`；非该类型时 `ok` 为 false，直接断言失败会 panic。
 - 类型切换：`switch v := any.(type) { case string: ... }` 便于按动态类型分支。
@@ -79,7 +99,6 @@ func handle(v any) {
 ## 何时使用接口
 - 先写具体类型/函数，只有在需要跨实现、易替换、可测试时才抽象接口。
 - 接口通常由使用方定义（面向调用者），而非实现方。
-- 避免为每个 struct 机械地写“Xxxer”接口；保持接口小而精。
 
 ## Go 接口为何隐式实现
 - 设计目标：减少样板和耦合，调用者只关心行为签名，不需要实现方显式声明“implements”。
@@ -101,4 +120,3 @@ var _ Printer = (*User)(nil) // 编译期检查 *User 是否实现 Printer
 1) 定义 `Printer` 接口，声明 `Print() string` 方法；让 `User`、`Product` 实现并打印不同格式。
 2) 写一个函数 `LogAll(ps []Printer)`，遍历并打印其输出。
 3) 写一个类型 `Box`，内部持有 `any`，提供 `AsString() string`，使用类型断言或类型切换来处理不同具体类型。 
-

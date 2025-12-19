@@ -25,6 +25,23 @@ defer cancel()
 doWork(ctx)
 ```
 
+## “结构体”是怎么组织的：一条 Context 链
+```go
+ctx := context.Background()
+ctx = context.WithValue(ctx, k, v)
+ctx, cancel := context.WithCancel(ctx)
+ctx, cancel2 := context.WithTimeout(ctx, time.Second)
+```
+在内部就是一条链，大致像这样：
+
+```
+timerCtx
+  └─ cancelCtx
+       └─ valueCtx
+            └─ emptyCtx(background)
+```
+每个 wrapper struct 都保存一个 parent Context，并且除了自己负责的那一项，其它方法都转发给 parent（delegation）。
+
 ## 在 goroutine 与 I/O 中监听 Done
 - 长时间运行的 goroutine、阻塞 I/O、循环都要检查 `ctx.Done()`，退出时释放资源。
 - 使用 `select` 同时等待业务通道与 `ctx.Done()`，避免 goroutine 泄漏。
