@@ -59,3 +59,11 @@ func ProcessWithPool(ctx context.Context, inputs []int, workers int) ([]int, err
 	}
 	return results, nil
 }
+
+/*
+results 没有数据竞争的原因：
+
+- 每个元素只会被写一次：job{idx, val} 在生产时就绑定了唯一的 idx，jobs 通道的元素只能被某一个 worker 取到，因此同一 idx 不会被两个 goroutine 同时写。
+- 主 goroutine 不读 results，直到 wg.Wait() 完成所有 worker；写入阶段只有 worker 在写，读取阶段只有主 goroutine 在读，读写不重叠。
+- 取消场景下，worker 直接返回，不会和其他 worker 同时写同一个下标，只是可能留下默认值 0。
+*/

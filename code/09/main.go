@@ -20,6 +20,16 @@ func (e *ValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Field, e.Reason)
 }
 
+func load1(id int) (string, error) {
+	if id == 0 {
+		return "", fmt.Errorf("load1: %w", ErrNotFound)
+	}
+	if id < 0 {
+		return "", &ValidationError{Field: "id", Reason: "must be positive"}
+	}
+	return fmt.Sprintf("item-%d", id), nil
+}
+
 // load 模拟底层加载
 func load(id int) (string, error) {
 	if id == 0 {
