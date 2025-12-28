@@ -15,6 +15,16 @@
 - 中间件模式：日志、恢复、跨域
 - 健康检查与基础配置结构体
 
+## 背景知识
+
+- 计算机网络，
+  - TCP/IP，https://zhuanlan.zhihu.com/p/707262573
+  - HTTP协议，https://developer.mozilla.org/zh-CN/docs/Web/HTTP
+  - HTTPS，https://cloud.tencent.com/developer/article/2183903
+
+- 单页应用程序Single Page Application，https://www.explainthis.io/zh-hans/swe/spa
+- Cookie/Session https://www.cnblogs.com/felixzh/p/16883998.html
+
 ## Server 与 Handler 基础
 - `http.ListenAndServe(addr, handler)` 启动服务；`handler` 可为 `http.Handler` 实现或 `http.HandlerFunc`。
 - `http.DefaultServeMux` 是默认多路复用器，`http.HandleFunc`/`Handle` 注册路由；自定义 `ServeMux` 可避免全局污染。
@@ -31,10 +41,18 @@ func hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	mux := http.NewServeMux()
+	mux := http.NewServeMux() //Multiplexer，请求分发器 / 路由器
 	mux.HandleFunc("/hello", hello)
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
+```
+
+```
+一个端口 ( :8080 )
+        ↓
+根据 URL path
+        ↓
+不同的 handler
 ```
 
 ## 读取请求与返回响应
@@ -47,6 +65,8 @@ func main() {
 - 典型职责：日志、恢复（recover panic）、CORS、认证、限流。
 - 模板：`func(next http.Handler) http.Handler { return http.HandlerFunc(func(w,r){...; next.ServeHTTP(w,r)}) }`
 - 组合：从外到内 wrap，或使用切片迭代包装。
+
+
 
 示例：日志 + 恢复
 ```go
@@ -76,6 +96,15 @@ func chain(h http.Handler, m ...func(http.Handler) http.Handler) http.Handler {
 	return h
 }
 ```
+
+```
+logging.before
+  recoverer.before
+    handler
+  recoverer.after
+logging.after
+```
+
 
 ## 健康检查与配置
 - 健康检查 endpoint：`/healthz` 返回 200/ok，便于探活。

@@ -7,7 +7,6 @@
 - 输入校验：请求体、URL 参数与 Header 的验证策略、错误返回设计
 - 身份认证与授权概念：介绍 JWT 与 API Key 的基本使用与典型实现注意事项，说明在 SSE/长连接场景下的认证续期与断线处理策略。
 - 防御常见攻击：CSRF、XSS、注入（SQL/命令注入）
-- 服务韧性与滥用防护：请求超时、重试+指数退避、熔断/舱壁隔离、速率限制等手段
 - 敏感信息处理：如何避免在日志中记录敏感数据、配置与密钥管理的基本建议（环境变量、Vault 等简介）。
 
 ## 输入校验策略
@@ -17,10 +16,12 @@
 - 长连接/SSE：连接前校验 token/key，连接后可周期校验；连接断开时清理会话状态。
 
 ## 鉴权与凭证
+- 区分认证与授权：authentication 确认“你是谁”，通常基于密码/API Key/JWT 完成身份验证；authorization 决定“你能做什么”，需在路由/资源层做权限检查和最小权限控制。
 - API Key：简单易用，放在 Header；需定期轮换，限制作用域与来源。
 - JWT：自包含令牌，注意设置短有效期、签名算法（避免 none）、校验 aud/iss；长连接场景可在握手后存储 claims。
 - 会话续期：使用刷新 token 或重连时重新验证；SSE/WS 在后台检测过期时主动关闭连接。
 - 最小权限：按路由/动作划分权限，后端进行授权检查，而不仅仅是认证。
+
 
 ### JWT 详解与示例（参考 code/17）
 - 组成：Header（算法/类型）、Payload（claims）、Signature（签名）。常用 HS256（对称密钥）或 RS256（非对称）。
@@ -28,6 +29,32 @@
 - 生命周期：短有效期 + 服务端轮换 secret/密钥；长连接时在握手后缓存 claims，并在过期时断开或要求重连。
 - 校验：验证签名 + 过期时间 + 受众/签发方；拒绝解析失败或过期的 token。
 - 传输：放在 `Authorization: Bearer <jwt>`；避免写入日志或返回给无关方。
+- Demo（使用 `github.com/golang-jwt/jwt/v5`）：快速签发+校验 HS256 Token。
+
+```go
+// go get github.com/golang-jwt/jwt/v5
+func demoJWT() {
+    secret := []byte("dev-secret")
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+        "sub": "alice",
+        "exp": time.Now().Add(30 * time.Minute).Unix(),
+    })
+    signed, _ := token.SignedString(secret)
+    fmt.Println("token:", signed)
+
+    parsed, err := jwt.Parse(signed, func(t *jwt.Token) (interface{}, error) {
+        if t.Method != jwt.SigningMethodHS256 {
+            return nil, fmt.Errorf("unexpected alg")
+        }
+        return secret, nil
+    })
+    if err != nil || !parsed.Valid {
+        log.Fatal(err)
+    }
+    fmt.Println("claims sub:", parsed.Claims.(jwt.MapClaims)["sub"])
+}
+```
+- jwt.io：在线解析/验证 Token，便于调试 Header/Payload 与签名是否匹配（不要上传生产密钥或真实 Token）。
 
 code/17 片段：
 ```go
@@ -62,17 +89,11 @@ func BearerAuthMiddleware(secret string, allowlist []string) func(http.Handler) 
 - 注入：使用参数化查询，永远不要拼接 SQL；对命令执行使用 `exec.CommandContext` 并限制参数。
 - 头部安全：设置 `Content-Security-Policy`、`X-Content-Type-Options: nosniff`、`X-Frame-Options`、`Strict-Transport-Security`（仅 HTTPS）。
 
-## 服务韧性与滥用防护
-- 超时：为外部依赖设置 context 超时；服务器端设置 Read/Write/Idle timeout 防慢攻击。
-- 重试：对幂等操作使用退避重试；非幂等操作避免自动重试或结合幂等键。
-- 熔断/舱壁：隔离下游故障，避免拖垮全局；可用现成库或简单的 semaphore 限制并发。
-- 限流：令牌桶或漏桶实现；在网关或服务内拦截异常流量。
-- 观测：记录安全相关事件（失败登录、权限拒绝、限流命中），方便审计。
 
 ## 敏感信息处理
 - 日志脱敏：屏蔽密码、token、身份证号等；必要时仅记录 hash/掩码。
 - 配置管理：使用环境变量或秘密管理服务（Vault、Secrets Manager）；避免密钥进仓库。
-- 传输安全：优先 HTTPS；内部服务也应考虑 mTLS 或专网隔离。
+- 传输安全：优先 HTTPS；内部服务也应考虑 mTLS 或专网隔离，或者可以了解 Zero Trust https://www.cloudflare.com/zh-cn/learning/security/glossary/what-is-zero-trust/。
 
 
 ## 外部参考
@@ -81,3 +102,4 @@ func BearerAuthMiddleware(secret string, allowlist []string) func(http.Handler) 
 - OWASP Cheat Sheet（安全实践速查表）: https://cheatsheetseries.owasp.org/
 - JWT 简介与实践: https://jwt.io/introduction
 - HTTP 与安全头概览: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers
+- https://zhuanlan.zhihu.com/p/657449219

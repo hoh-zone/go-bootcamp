@@ -16,7 +16,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
 		Logger:       logger,
-		Token:        "demo-token",
+		JWTSecret:    "demo-token",
 		AllowOrigin:  "*",
 	}
 
